@@ -59,8 +59,8 @@ flowchart TD
 
 ### 1. Kloning Repository
 ```bash
-git clone https://github.com/USERNAME_KAMU/gold-ai-terminal.git
-cd gold-ai-terminal
+git clone https://github.com/IlhamXkyo/aurum-ai-terminal.git
+cd aurum-ai-terminal
 ```
 
 ### 2. Pasang Dependencies
