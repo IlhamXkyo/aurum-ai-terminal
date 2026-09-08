@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forex & Gold AI Live Trading Terminal</title>
+    <title>Aurum AI Live Trading Terminal</title>
     <link rel="stylesheet" href="/static/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
 </head>
 <body>
@@ -17,8 +17,8 @@
             <div class="brand-group">
                 <div class="pulse-indicator" title="Live Connection Active"></div>
                 <div class="brand-text">
-                    <span class="brand-title">GOLD & FOREX <span class="ai-badge">AI TERMINAL</span></span>
-                    <span class="brand-sub">Multi-Agent Parallel Intelligence Engine</span>
+                    <span class="brand-title">AURUM <span class="ai-badge">AI TERMINAL</span></span>
+                    <span class="brand-sub">Institutional Multi-Agent Intelligence Engine</span>
                 </div>
             </div>
 
@@ -49,47 +49,114 @@
                 </div>
             </div>
 
-            <!-- Action Buttons -->
+            <!-- Action & Streaming Toggles -->
             <div class="actions-group">
-                <div class="auto-refresh-toggle">
+                <div class="toggle-wrap">
+                    <label class="switch">
+                        <input type="checkbox" id="autoAiToggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <span class="switch-label stream-active">⚡ Auto-AI Stream</span>
+                </div>
+
+                <div class="toggle-wrap">
                     <label class="switch">
                         <input type="checkbox" id="autoRefreshToggle" checked>
                         <span class="slider"></span>
                     </label>
-                    <span class="switch-label">Live Data</span>
+                    <span class="switch-label">Live Tick</span>
                 </div>
 
-                <button id="btnRunAnalysis" class="btn-analyze">
+                <button id="btnRunAnalysis" class="btn-analyze" title="Jalankan analisis ulang sekarang">
                     <span class="bolt-icon">⚡</span>
-                    <span>Analisis Multi-Agen Paralel</span>
+                    <span>Analisis Ulang</span>
                 </button>
             </div>
         </header>
 
         <!-- Main Workspace Grid -->
         <main class="main-grid">
-            <!-- Left Pane: Live Chart & Metrics -->
+            <!-- Left Pane: Live Chart & On-Chart Overlays -->
             <section class="chart-section">
                 <div class="chart-header">
                     <div class="chart-title-box">
-                        <span id="chartLabel">OANDA:XAUUSD</span> &bull; <span id="timeframeLabel">15 Menit</span> &bull; <span class="stream-tag">Real-Time Tick Stream</span>
+                        <span id="chartLabel">OANDA:XAUUSD</span> &bull; <span id="timeframeLabel">15 Menit</span> &bull; <span class="stream-tag">Real-Time Tick Feed</span>
                     </div>
                     <div class="chart-stats" id="chartStats">
                         <span>High: <b id="statHigh">----</b></span>
                         <span>Low: <b id="statLow">----</b></span>
-                        <span>Spread/ATR: <b id="statAtr">----</b></span>
+                        <span>ATR (Vol): <b id="statAtr">----</b></span>
                     </div>
                 </div>
 
-                <!-- TradingView Embedded Container -->
+                <!-- TradingView Embedded Container with Live Overlays -->
                 <div class="tradingview-wrapper">
                     <div id="tradingview_widget" class="tradingview-container"></div>
+                    
+                    <!-- On-Chart AI Signal & HUD Overlay -->
+                    <div class="chart-ai-overlay" id="chartAiOverlay">
+                        <!-- Top Floating Signal Badge -->
+                        <div class="chart-top-bar">
+                            <div class="chart-signal-badge" id="chartSignalBadge">
+                                <span class="signal-dot"></span>
+                                <span class="signal-action" id="chartSignalAction">MENGANALISIS...</span>
+                                <span class="signal-bias" id="chartSignalBias">AI RUNNING</span>
+                            </div>
+
+                            <div class="chart-session-pill" id="chartSessionPill">
+                                <span class="session-dot"></span>
+                                <span id="chartSessionName">Sesi Pasar: Memuat...</span>
+                            </div>
+                        </div>
+
+                        <!-- On-Chart Price Target Levels Ribbon (Direct visual on chart) -->
+                        <div class="chart-levels-hud" id="chartLevelsHud">
+                            <div class="hud-item hud-entry">
+                                <div class="hud-header">
+                                    <span class="hud-badge entry-badge">ENTRY</span>
+                                    <span class="hud-type">Optimal Limit</span>
+                                </div>
+                                <span class="hud-val" id="hudEntry">---- - ----</span>
+                            </div>
+
+                            <div class="hud-item hud-sl">
+                                <div class="hud-header">
+                                    <span class="hud-badge sl-badge">STOP LOSS</span>
+                                    <span class="hud-pip" id="hudSlPips">-0 pips</span>
+                                </div>
+                                <span class="hud-val" id="hudSl">----</span>
+                            </div>
+
+                            <div class="hud-item hud-tp1">
+                                <div class="hud-header">
+                                    <span class="hud-badge tp-badge">TAKE PROFIT 1</span>
+                                    <span class="hud-pip" id="hudTp1Pips">+0 pips</span>
+                                </div>
+                                <span class="hud-val" id="hudTp1">----</span>
+                            </div>
+
+                            <div class="hud-item hud-tp2">
+                                <div class="hud-header">
+                                    <span class="hud-badge tp-badge">TAKE PROFIT 2</span>
+                                    <span class="hud-pip" id="hudTp2Pips">+0 pips</span>
+                                </div>
+                                <span class="hud-val" id="hudTp2">----</span>
+                            </div>
+
+                            <div class="hud-item hud-rr">
+                                <div class="hud-header">
+                                    <span class="hud-badge rr-badge">R:R RATIO</span>
+                                </div>
+                                <span class="hud-val" id="hudRr">1 : --</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Bottom Quick Indicator Ribbon -->
                 <div class="indicator-ribbon">
                     <div class="ribbon-card">
-                        <span class="ribbon-label">RSI (14)</span>
+                        <span class="ribbon-label">RSI (14) MOMENTUM</span>
                         <div class="rsi-display">
                             <span class="ribbon-val" id="ribbonRsi">--.-</span>
                             <div class="progress-bar-wrap">
@@ -99,7 +166,7 @@
                     </div>
 
                     <div class="ribbon-card">
-                        <span class="ribbon-label">MACD (12, 26, 9)</span>
+                        <span class="ribbon-label">MACD HISTOGRAM</span>
                         <span class="ribbon-val" id="ribbonMacd">--.--</span>
                         <span class="ribbon-sub" id="ribbonMacdState">Calculating...</span>
                     </div>
@@ -114,7 +181,7 @@
                     </div>
 
                     <div class="ribbon-card">
-                        <span class="ribbon-label">PIVOT S/R LEVEL</span>
+                        <span class="ribbon-label">DAILY PIVOT EQUILIBRIUM</span>
                         <span class="ribbon-val" id="ribbonPivot">Pivot: ----</span>
                         <span class="ribbon-sub" id="ribbonPivotRange">S1: ---- | R1: ----</span>
                     </div>
@@ -126,7 +193,7 @@
                 <div class="ai-header">
                     <div class="ai-title">
                         <h3>PANEL INTELIJEN MULTI-AGEN</h3>
-                        <span class="ai-subtitle">3 Agen Analisis Paralel + 1 Chief Strategist</span>
+                        <span class="ai-subtitle">4 Agen Analitik Paralel + 1 Chief Risk Strategist</span>
                     </div>
                     <div class="bench-badge" id="benchBadge">
                         ⚡ Paralel: <span id="benchTime">-- ms</span>
@@ -141,7 +208,7 @@
                             <span class="bias-sub" id="biasBadge">MENGANALISIS...</span>
                         </div>
                         <div class="confidence-box">
-                            <span class="conf-label">KEYAKINAN</span>
+                            <span class="conf-label">KEYAKINAN SETUP</span>
                             <span class="conf-value" id="confValue">--%</span>
                             <div class="conf-meter">
                                 <div class="conf-meter-fill" id="confFill" style="width: 0%;"></div>
@@ -155,46 +222,67 @@
                             <span class="lvl-price" id="tradeEntry">---- - ----</span>
                         </div>
                         <div class="level-box sl-box">
-                            <span class="lvl-title">STOP LOSS (INVALIDASI)</span>
+                            <div class="lvl-header-flex">
+                                <span class="lvl-title">STOP LOSS (INVALIDASI)</span>
+                                <span class="pip-tag sl-pip-tag" id="tradeSlPips">-0 pips</span>
+                            </div>
                             <span class="lvl-price" id="tradeSl">----</span>
                         </div>
                         <div class="level-box tp-box">
-                            <span class="lvl-title">TAKE PROFIT 1</span>
+                            <div class="lvl-header-flex">
+                                <span class="lvl-title">TAKE PROFIT 1</span>
+                                <span class="pip-tag tp-pip-tag" id="tradeTp1Pips">+0 pips</span>
+                            </div>
                             <span class="lvl-price" id="tradeTp1">----</span>
                         </div>
                         <div class="level-box tp-box">
-                            <span class="lvl-title">TAKE PROFIT 2</span>
+                            <div class="lvl-header-flex">
+                                <span class="lvl-title">TAKE PROFIT 2</span>
+                                <span class="pip-tag tp-pip-tag" id="tradeTp2Pips">+0 pips</span>
+                            </div>
                             <span class="lvl-price" id="tradeTp2">----</span>
                         </div>
                         <div class="level-box rr-box">
-                            <span class="lvl-title">RISK : REWARD</span>
+                            <span class="lvl-title">RISK TO REWARD RATIO</span>
                             <span class="lvl-price" id="tradeRr">1 : --</span>
                         </div>
                     </div>
 
+                    <!-- Trade Management Rules -->
+                    <div class="mgmt-rules-box" id="mgmtRulesBox">
+                        <div class="rule-item">
+                            <span class="rule-badge be-badge">🛡️ BREAKEVEN</span>
+                            <span class="rule-text" id="ruleBreakeven">Geser SL ke Entry saat harga mencapai TP1.</span>
+                        </div>
+                        <div class="rule-item">
+                            <span class="rule-badge ptp-badge">💰 PARTIAL TP</span>
+                            <span class="rule-text" id="rulePartial">Tutup 50% lot di TP1, sisanya ke TP2.</span>
+                        </div>
+                    </div>
+
                     <p class="trade-narrative" id="tradeNarrative">
-                        Klik tombol <b>"Analisis Multi-Agen Paralel"</b> untuk menjalankan 4 agen AI secara serentak membaca chart dan data real-time.
+                        Memuat data pasar real-time dan orkestrasi 4 agen paralel...
                     </p>
                 </div>
 
-                <!-- Parallel Agent Cards -->
+                <!-- Parallel Agent Cards (4 Analytical Agents) -->
                 <div class="agents-stack">
                     <!-- Agent 1 Card -->
                     <div class="agent-card" id="agentCard1">
                         <div class="agent-header">
                             <div class="agent-avatar avatar-structure">🏛️</div>
                             <div class="agent-meta">
-                                <span class="agent-name">AGEN 1: MARKET STRUCTURE & TREND</span>
-                                <span class="agent-role">Higher Timeframe (4H / Daily) Alignment</span>
+                                <span class="agent-name">AGEN 1: MARKET STRUCTURE & FRACTAL TREND</span>
+                                <span class="agent-role">HTF Fractal Alignment & Wyckoff Phase</span>
                             </div>
                             <span class="agent-tag" id="tagAgent1">STANDBY</span>
                         </div>
                         <div class="agent-body">
                             <div class="agent-metrics" id="metricsAgent1">
                                 <span class="metric-item">Tren: <b id="ag1Trend">--</b></span>
-                                <span class="metric-item">Struktur: <b id="ag1State">--</b></span>
+                                <span class="metric-item">Wyckoff: <b id="ag1Wyckoff">--</b></span>
                             </div>
-                            <p class="agent-text" id="textAgent1">Menunggu pemanggilan analisis paralel...</p>
+                            <p class="agent-text" id="textAgent1">Menunggu inisialisasi...</p>
                         </div>
                     </div>
 
@@ -203,17 +291,17 @@
                         <div class="agent-header">
                             <div class="agent-avatar avatar-pa">🕯️</div>
                             <div class="agent-meta">
-                                <span class="agent-name">AGEN 2: PRICE ACTION & MOMENTUM</span>
-                                <span class="agent-role">Pola Candlestick, Rejection, RSI & MACD</span>
+                                <span class="agent-name">AGEN 2: PRICE ACTION & MOMENTUM PRO</span>
+                                <span class="agent-role">Morfologi Candlestick & Divergensi RSI</span>
                             </div>
                             <span class="agent-tag" id="tagAgent2">STANDBY</span>
                         </div>
                         <div class="agent-body">
                             <div class="agent-metrics" id="metricsAgent2">
                                 <span class="metric-item">Pola: <b id="ag2Pattern">--</b></span>
-                                <span class="metric-item">Momentum: <b id="ag2Mom">--</b></span>
+                                <span class="metric-item">Divergensi: <b id="ag2Div">--</b></span>
                             </div>
-                            <p class="agent-text" id="textAgent2">Menunggu pemanggilan analisis paralel...</p>
+                            <p class="agent-text" id="textAgent2">Menunggu inisialisasi...</p>
                         </div>
                     </div>
 
@@ -222,28 +310,47 @@
                         <div class="agent-header">
                             <div class="agent-avatar avatar-smc">🌊</div>
                             <div class="agent-meta">
-                                <span class="agent-name">AGEN 3: SMC & INSTITUTIONAL LIQUIDITY</span>
-                                <span class="agent-role">Smart Money Concepts, Order Blocks, Liquidity Sweeps</span>
+                                <span class="agent-name">AGEN 3: ICT / SMC & LIQUIDITY HUNT</span>
+                                <span class="agent-role">Order Block, Fair Value Gap (FVG) & OTE Fib</span>
                             </div>
                             <span class="agent-tag" id="tagAgent3">STANDBY</span>
                         </div>
                         <div class="agent-body">
                             <div class="agent-metrics" id="metricsAgent3">
-                                <span class="metric-item">Zona: <b id="ag3Zone">--</b></span>
+                                <span class="metric-item">Valuasi: <b id="ag3Zone">--</b></span>
                                 <span class="metric-item">Likuiditas: <b id="ag3Target">--</b></span>
                             </div>
-                            <p class="agent-text" id="textAgent3">Menunggu pemanggilan analisis paralel...</p>
+                            <p class="agent-text" id="textAgent3">Menunggu inisialisasi...</p>
+                        </div>
+                    </div>
+
+                    <!-- Agent 4 Card (NEW: Macro & Session Analyst) -->
+                    <div class="agent-card" id="agentCard4">
+                        <div class="agent-header">
+                            <div class="agent-avatar avatar-macro">🌍</div>
+                            <div class="agent-meta">
+                                <span class="agent-name">AGEN 4: MACRO & MARKET SESSION ANALYST</span>
+                                <span class="agent-role">Session Killzones, Intermarket DXY, Risk-On/Off</span>
+                            </div>
+                            <span class="agent-tag" id="tagAgent4">STANDBY</span>
+                        </div>
+                        <div class="agent-body">
+                            <div class="agent-metrics" id="metricsAgent4">
+                                <span class="metric-item">Sesi: <b id="ag4Session">--</b></span>
+                                <span class="metric-item">Bias Makro: <b id="ag4MacroBias">--</b></span>
+                            </div>
+                            <p class="agent-text" id="textAgent4">Menunggu inisialisasi...</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Footer Checklist -->
                 <div class="checklist-panel">
-                    <span class="checklist-title">PANDUAN EKSEKUSI TIKET</span>
+                    <span class="checklist-title">PANDUAN EKSEKUSI TIKET INSTITUSIONAL</span>
                     <ul class="checklist-items" id="checklistItems">
-                        <li>Pastikan setup searah dengan struktur utama HTF (4H).</li>
-                        <li>Gunakan manajemen risiko maksimal 1-2% dari total modal per transaksi.</li>
-                        <li>Pasang Stop Loss (SL) tepat di titik invalidasi yang direkomendasikan.</li>
+                        <li>Gunakan manajemen risiko maksimal 1-2% modal per transaksi.</li>
+                        <li>Pastikan sinyal selaras dengan sesi likuiditas tinggi (London / NY Killzone).</li>
+                        <li>Terapkan aturan Breakeven dan Ambil Partial Profit di target TP1.</li>
                     </ul>
                 </div>
             </aside>

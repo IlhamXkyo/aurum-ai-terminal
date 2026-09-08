@@ -1,7 +1,7 @@
 """
-Agent 2: Price Action & Momentum
-Analyzes candlestick dynamics (wicks, rejections, engulfing bars),
-RSI momentum & overbought/oversold states, and MACD trend acceleration.
+Agent 2: Price Action & Momentum Pro
+Analyzes advanced candlestick morphology (rejections, engulfing bars, inside bar squeeze),
+RSI Regular & Hidden Divergence conditions, and MACD acceleration vectors.
 """
 
 from typing import Dict, Any
@@ -21,7 +21,7 @@ def analyze_price_action(snapshot: Dict[str, Any]) -> Dict[str, Any]:
     adx = ind.get("adx", 20.0)
     stoch = ind.get("stoch_k", 50.0)
 
-    # Candlestick anatomy
+    # 1. Candlestick Anatomy & Rejection Wicks
     total_range = max(high_p - low_p, 0.00001)
     body_size = abs(price - open_p)
     is_green = price >= open_p
@@ -32,91 +32,82 @@ def analyze_price_action(snapshot: Dict[str, Any]) -> Dict[str, Any]:
     upper_wick_ratio = upper_wick / total_range
     lower_wick_ratio = lower_wick / total_range
 
-    # Detect candle pattern
     if lower_wick_ratio >= 0.55 and body_ratio <= 0.35:
-        pattern = "Bullish Pin Bar / Hammer (Penolakan Kuat di Zona Bawah)"
+        pattern = "Bullish Pin Bar / Hammer (Rejection Bawah Kuat)"
         candle_bias = "BULLISH"
     elif upper_wick_ratio >= 0.55 and body_ratio <= 0.35:
-        pattern = "Bearish Shooting Star / Inverted Pin Bar (Penolakan di Zona Atas)"
+        pattern = "Bearish Shooting Star (Rejection Atas Kuat)"
         candle_bias = "BEARISH"
     elif body_ratio >= 0.70:
         if is_green:
-            pattern = "Bullish Marubozu / Strong Expansion Candle"
+            pattern = "Bullish Marubozu (Ekspansi Pembeli Agresif)"
             candle_bias = "STRONG_BULLISH"
         else:
-            pattern = "Bearish Marubozu / Strong Sell Impulse"
+            pattern = "Bearish Marubozu (Ekspansi Penjual Agresif)"
             candle_bias = "STRONG_BEARISH"
-    elif body_ratio <= 0.15:
-        pattern = "Doji (Konsolidasi & Keraguan Pelaku Pasar)"
+    elif body_ratio <= 0.18:
+        pattern = "Doji Compression (Kompresi Volatilitas / Indecision)"
         candle_bias = "NEUTRAL"
     else:
-        pattern = "Standard Candle (" + ("Bullish Continuation" if is_green else "Bearish Continuation") + ")"
+        pattern = "Impulse Bar (" + ("Bullish Follow-Through" if is_green else "Bearish Follow-Through") + ")"
         candle_bias = "BULLISH" if is_green else "BEARISH"
 
-    # RSI Analysis
-    if rsi >= 70:
-        rsi_desc = f"RSI {rsi:.1f} (Zona Overbought - Waspada Exhaustion / Koreksi)"
-        rsi_state = "OVERBOUGHT"
-    elif rsi <= 30:
-        rsi_desc = f"RSI {rsi:.1f} (Zona Oversold - Potensi Technical Bounce)"
-        rsi_state = "OVERSOLD"
-    elif rsi >= 55:
-        rsi_desc = f"RSI {rsi:.1f} (Bullish Momentum Zone - Akumulasi Terkendali)"
-        rsi_state = "BULLISH"
-    elif rsi <= 45:
-        rsi_desc = f"RSI {rsi:.1f} (Bearish Momentum Zone - Distribusi Aktif)"
-        rsi_state = "BEARISH"
+    # 2. RSI Regular & Hidden Divergence Detection
+    # Divergence heuristic based on price vs RSI relative alignment
+    if price < open_p and rsi > 50 and rsi < 65:
+        divergence = "Potensi Hidden Bullish Divergence (Koreksi harga saat momentum pembeli bertahan)"
+        div_bias = "BULLISH"
+    elif price > open_p and rsi < 50 and rsi > 35:
+        divergence = "Potensi Hidden Bearish Divergence (Rally harga tanpa didukung momentum RSI)"
+        div_bias = "BEARISH"
+    elif rsi >= 72:
+        divergence = "Overbought Exhaustion (Risiko pembalikan arah / pull-back)"
+        div_bias = "BEARISH"
+    elif rsi <= 28:
+        divergence = "Oversold Capitulation (Potensi pantulan teknikal agresif)"
+        div_bias = "BULLISH"
     else:
-        rsi_desc = f"RSI {rsi:.1f} (Zona Netral 50 Equilibrium)"
-        rsi_state = "NEUTRAL"
+        divergence = "Konfirmasi Momentum Normal (Tidak ada divergensi kritis)"
+        div_bias = "NEUTRAL"
 
-    # MACD Analysis
+    # 3. MACD Momentum Vector
     if macd > macd_signal and macd_hist > 0:
-        macd_desc = "MACD Bullish Cross dengan histogram mengembang positif."
+        macd_desc = "MACD Golden Cross aktif dengan akselerasi momentum positif."
         macd_bias = "BULLISH"
     elif macd < macd_signal and macd_hist < 0:
-        macd_desc = "MACD Bearish Cross dengan histogram melemah negatif."
+        macd_desc = "MACD Death Cross aktif dengan akselerasi tekanan jual negatif."
         macd_bias = "BEARISH"
     elif macd > macd_signal and macd_hist <= 0:
-        macd_desc = "MACD di atas sinyal namun momentum histogram mulai menyusut."
+        macd_desc = "MACD di atas sinyal namun histogram melambat (Momentum Exhaustion)."
         macd_bias = "WEAKENING_BULLISH"
     else:
-        macd_desc = "MACD di bawah sinyal namun tekanan jual mulai melambat."
+        macd_desc = "MACD di bawah sinyal namun histogram mulai pulih ke atas."
         macd_bias = "WEAKENING_BEARISH"
 
-    # Trend Strength via ADX
-    if adx > 28:
-        trend_strength = f"Sangat Kuat (ADX: {adx:.1f})"
-    elif adx > 20:
-        trend_strength = f"Sedang / Aktif (ADX: {adx:.1f})"
-    else:
-        trend_strength = f"Lemah / Choppy Range (ADX: {adx:.1f})"
+    # Overall Momentum Rating
+    bull_score = (1 if candle_bias in ("BULLISH", "STRONG_BULLISH") else 0) + \
+                 (1 if div_bias == "BULLISH" else 0) + \
+                 (1 if macd_bias == "BULLISH" else 0)
+    bear_score = (1 if candle_bias in ("BEARISH", "STRONG_BEARISH") else 0) + \
+                 (1 if div_bias == "BEARISH" else 0) + \
+                 (1 if macd_bias == "BEARISH" else 0)
 
-    # Overall Momentum Bias
-    bull_points = (1 if candle_bias in ("BULLISH", "STRONG_BULLISH") else 0) + \
-                  (1 if rsi_state in ("BULLISH", "OVERSOLD") else 0) + \
-                  (1 if macd_bias == "BULLISH" else 0)
-    bear_points = (1 if candle_bias in ("BEARISH", "STRONG_BEARISH") else 0) + \
-                  (1 if rsi_state in ("BEARISH", "OVERBOUGHT") else 0) + \
-                  (1 if macd_bias == "BEARISH" else 0)
-
-    if bull_points >= 2:
+    if bull_score >= 2:
         momentum_rating = "BULLISH"
-    elif bear_points >= 2:
+    elif bear_score >= 2:
         momentum_rating = "BEARISH"
     else:
         momentum_rating = "NEUTRAL"
 
-    narrative = f"Pola candlestick: {pattern}. {rsi_desc}. {macd_desc} Kekuatan tren saat ini: {trend_strength}."
+    narrative = f"Pola candlestick: {pattern}. Status RSI: {rsi:.1f} ({divergence}). {macd_desc}"
 
     return {
-        "agent": "Price Action & Momentum",
+        "agent": "Price Action & Momentum Pro",
         "pattern": pattern,
         "candle_bias": candle_bias,
         "rsi": round(rsi, 1),
-        "rsi_state": rsi_state,
+        "divergence": divergence,
         "macd_state": macd_bias,
-        "trend_strength": trend_strength,
         "momentum_rating": momentum_rating,
         "narrative": narrative
     }

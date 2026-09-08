@@ -19,6 +19,7 @@ from data_fetcher import fetch_market_snapshot, PAIR_CONFIG
 from agents.market_structure import analyze_market_structure
 from agents.price_action import analyze_price_action
 from agents.smc_liquidity import analyze_smc_liquidity
+from agents.macro_fundamental import analyze_macro_session
 from agents.trade_strategist import synthesize_trade_plan
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
@@ -59,24 +60,27 @@ def run_analysis():
         # 1. Fetch live snapshot
         snapshot = fetch_market_snapshot(symbol=symbol, timeframe=timeframe)
         
-        # 2. Run Agent 1, 2, and 3 in PARALLEL via ThreadPoolExecutor
+        # 2. Run 4 analytical agents in PARALLEL via ThreadPoolExecutor
         agent_start = time.time()
-        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             future_structure = executor.submit(analyze_market_structure, snapshot)
             future_price_action = executor.submit(analyze_price_action, snapshot)
             future_smc = executor.submit(analyze_smc_liquidity, snapshot)
+            future_macro = executor.submit(analyze_macro_session, snapshot)
             
             structure_res = future_structure.result()
             price_action_res = future_price_action.result()
             smc_res = future_smc.result()
+            macro_res = future_macro.result()
         agent_time_ms = round((time.time() - agent_start) * 1000, 1)
 
-        # 3. Agent 4: Chief Strategist synthesizes the 3 parallel agents
+        # 3. Agent 5: Chief Strategist synthesizes the 4 parallel agents
         trade_plan = synthesize_trade_plan(
             snapshot=snapshot,
             structure=structure_res,
             price_action=price_action_res,
-            smc=smc_res
+            smc=smc_res,
+            macro=macro_res
         )
 
         total_time_ms = round((time.time() - start_time) * 1000, 1)
@@ -96,6 +100,7 @@ def run_analysis():
                 "market_structure": structure_res,
                 "price_action": price_action_res,
                 "smc_liquidity": smc_res,
+                "macro_session": macro_res,
                 "trade_strategist": trade_plan
             }
         })

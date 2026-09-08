@@ -1,10 +1,13 @@
 // State
 let currentSymbol = "XAUUSD";
 let currentTimeframe = "15";
-let autoRefresh = true;
+let autoTickRefresh = true;
+let autoAiStream = true;
 let tvWidget = null;
 let lastPrice = 0;
-let pollTimer = null;
+let tickTimer = null;
+let aiStreamTimer = null;
+let isAnalyzing = false;
 
 // Ticker Mapping for TradingView Widget
 const TV_TICKER_MAP = {
@@ -41,8 +44,8 @@ document.addEventListener("DOMContentLoaded", () => {
     fetchMarketSnapshot();
     runParallelAnalysis();
 
-    // Start auto polling
-    startPolling();
+    // Start auto polling loops
+    startPollingLoops();
 });
 
 // 1. Initialize TradingView Advanced Chart Widget
@@ -105,41 +108,52 @@ function setupEventListeners() {
         });
     });
 
-    // Auto-refresh switch
+    // Auto-AI Stream toggle (Continuous real-time AI)
+    const autoAiToggle = document.getElementById("autoAiToggle");
+    autoAiToggle.addEventListener("change", (e) => {
+        autoAiStream = e.target.checked;
+        const lbl = document.querySelector(".stream-active");
+        if (lbl) {
+            lbl.style.opacity = autoAiStream ? "1" : "0.5";
+        }
+        if (autoAiStream) {
+            runParallelAnalysis();
+            startPollingLoops();
+        }
+    });
+
+    // Live Tick toggle
     const autoRefreshToggle = document.getElementById("autoRefreshToggle");
     autoRefreshToggle.addEventListener("change", (e) => {
-        autoRefresh = e.target.checked;
-        if (autoRefresh) {
-            startPolling();
-        } else {
-            stopPolling();
-        }
+        autoTickRefresh = e.target.checked;
     });
 
-    // Run Parallel Analysis button
+    // Manual Run Analysis button
     const btnRun = document.getElementById("btnRunAnalysis");
     btnRun.addEventListener("click", () => {
-        runParallelAnalysis();
+        runParallelAnalysis(true);
     });
 }
 
-function startPolling() {
-    stopPolling();
-    pollTimer = setInterval(() => {
-        if (autoRefresh) {
+function startPollingLoops() {
+    // 1. Live Tick polling (Every 3.5 seconds)
+    if (tickTimer) clearInterval(tickTimer);
+    tickTimer = setInterval(() => {
+        if (autoTickRefresh) {
             fetchMarketSnapshot();
         }
-    }, 4000);
+    }, 3500);
+
+    // 2. Auto-AI Stream Analysis loop (Every 8 seconds continuously in real-time)
+    if (aiStreamTimer) clearInterval(aiStreamTimer);
+    aiStreamTimer = setInterval(() => {
+        if (autoAiStream && !isAnalyzing) {
+            runParallelAnalysis(false);
+        }
+    }, 8000);
 }
 
-function stopPolling() {
-    if (pollTimer) {
-        clearInterval(pollTimer);
-        pollTimer = null;
-    }
-}
-
-// 3. Fetch Market Snapshot & Update Ribbon
+// 3. Fetch Market Snapshot & Update Indicators Ribbon
 async function fetchMarketSnapshot() {
     try {
         const res = await fetch(`/api/market-data?symbol=${currentSymbol}&timeframe=${currentTimeframe}`);
@@ -161,7 +175,7 @@ function updateMarketUI(snap) {
     // Flash animation on tick change
     if (lastPrice > 0 && price !== lastPrice) {
         priceEl.style.color = price > lastPrice ? "var(--color-bullish)" : "var(--color-bearish)";
-        setTimeout(() => { priceEl.style.color = "var(--text-bright)"; }, 600);
+        setTimeout(() => { priceEl.style.color = "var(--text-bright)"; }, 500);
     }
     lastPrice = price;
 
@@ -206,16 +220,16 @@ function updateMarketUI(snap) {
     document.getElementById("ribbonPivotRange").textContent = `S1: ${Number(piv.s1 || 0).toFixed(digits)} | R1: ${Number(piv.r1 || 0).toFixed(digits)}`;
 }
 
-// 4. Trigger Parallel Multi-Agent Analysis
-async function runParallelAnalysis() {
-    const btnRun = document.getElementById("btnRunAnalysis");
-    btnRun.classList.add("loading");
-    btnRun.innerHTML = `<span>⏳ Menjalankan 4 Agen...</span>`;
+// 4. Trigger Parallel Multi-Agent Analysis (Continuous or Manual)
+async function runParallelAnalysis(isManual = false) {
+    if (isAnalyzing) return;
+    isAnalyzing = true;
 
-    // Visual shimmer on agent tags
-    document.getElementById("tagAgent1").textContent = "PROSES...";
-    document.getElementById("tagAgent2").textContent = "PROSES...";
-    document.getElementById("tagAgent3").textContent = "PROSES...";
+    const btnRun = document.getElementById("btnRunAnalysis");
+    if (isManual) {
+        btnRun.classList.add("loading");
+        btnRun.innerHTML = `<span>⏳ Menganalisis...</span>`;
+    }
 
     try {
         const res = await fetch("/api/analyze", {
@@ -227,18 +241,19 @@ async function runParallelAnalysis() {
         const data = await res.json();
         if (data.success) {
             renderAnalysisResults(data);
-        } else {
-            alert("Gagal melakukan analisis: " + (data.error || "Unknown error"));
         }
     } catch (err) {
         console.error("Analysis error:", err);
     } finally {
-        btnRun.classList.remove("loading");
-        btnRun.innerHTML = `<span class="bolt-icon">⚡</span><span>Analisis Multi-Agen Paralel</span>`;
+        isAnalyzing = false;
+        if (isManual) {
+            btnRun.classList.remove("loading");
+            btnRun.innerHTML = `<span class="bolt-icon">⚡</span><span>Analisis Ulang</span>`;
+        }
     }
 }
 
-// 5. Render Agent Results & Master Trade Setup
+// 5. Render Agent Results, On-Chart HUD & Master Trade Setup
 function renderAnalysisResults(data) {
     const meta = data.meta;
     const agents = data.agents;
@@ -246,11 +261,45 @@ function renderAnalysisResults(data) {
     const struct = agents.market_structure;
     const pa = agents.price_action;
     const smc = agents.smc_liquidity;
+    const macro = agents.macro_session;
+    const levels = strat.chart_levels || {};
 
     // Execution benchmark
     document.getElementById("benchTime").textContent = `${meta.parallel_execution_time_ms} ms (Total: ${meta.total_processing_time_ms} ms)`;
 
-    // Master Trade Card
+    // ================= A. ON-CHART AI SIGNAL & HUD =================
+    const chartBadge = document.getElementById("chartSignalBadge");
+    const chartAction = document.getElementById("chartSignalAction");
+    const chartBias = document.getElementById("chartSignalBias");
+
+    if (strat.action === "BUY") {
+        chartAction.textContent = "▲ BUY SIGNAL ACTIVE";
+        chartBias.textContent = strat.bias.replace(/_/g, " ");
+        chartBadge.className = "chart-signal-badge bullish";
+    } else if (strat.action === "SELL") {
+        chartAction.textContent = "▼ SELL SIGNAL ACTIVE";
+        chartBias.textContent = strat.bias.replace(/_/g, " ");
+        chartBadge.className = "chart-signal-badge bearish";
+    } else {
+        chartAction.textContent = "■ WAIT / NO SETUP";
+        chartBias.textContent = "EQUILIBRIUM";
+        chartBadge.className = "chart-signal-badge neutral";
+    }
+
+    // Session Pill on Chart
+    document.getElementById("chartSessionName").textContent = `${macro.session_name} (${macro.utc_time})`;
+
+    // On-Chart Level Ribbon
+    document.getElementById("hudEntry").textContent = `${levels.entry_low} - ${levels.entry_high}`;
+    document.getElementById("hudSl").textContent = levels.stop_loss;
+    document.getElementById("hudSlPips").textContent = `-${levels.sl_pips} pips`;
+    document.getElementById("hudTp1").textContent = levels.take_profit_1;
+    document.getElementById("hudTp1Pips").textContent = `+${levels.tp1_pips} pips`;
+    document.getElementById("hudTp2").textContent = levels.take_profit_2;
+    document.getElementById("hudTp2Pips").textContent = `+${levels.tp2_pips} pips`;
+    document.getElementById("hudRr").textContent = levels.rr_ratio;
+
+    // ================= B. MASTER TRADE CARD =================
     const actionBadge = document.getElementById("actionBadge");
     const actionMain = actionBadge.querySelector(".action-main");
     const biasBadge = document.getElementById("biasBadge");
@@ -267,34 +316,50 @@ function renderAnalysisResults(data) {
 
     document.getElementById("tradeEntry").textContent = strat.entry_range;
     document.getElementById("tradeSl").textContent = strat.stop_loss;
+    document.getElementById("tradeSlPips").textContent = `-${strat.sl_pips} pips`;
     document.getElementById("tradeTp1").textContent = strat.take_profit_1;
+    document.getElementById("tradeTp1Pips").textContent = `+${strat.tp1_pips} pips`;
     document.getElementById("tradeTp2").textContent = strat.take_profit_2;
+    document.getElementById("tradeTp2Pips").textContent = `+${strat.tp2_pips} pips`;
     document.getElementById("tradeRr").textContent = strat.risk_reward;
     document.getElementById("tradeNarrative").textContent = strat.narrative;
 
-    // Agent 1: Market Structure
-    document.getElementById("ag1Trend").textContent = struct.trend;
-    document.getElementById("ag1State").textContent = struct.structure_state;
+    // Trade Management Rules
+    document.getElementById("ruleBreakeven").textContent = strat.breakeven_trigger;
+    document.getElementById("rulePartial").textContent = strat.partial_tp_rule;
+
+    // ================= C. PARALLEL AGENT CARDS =================
+    // Agent 1: Market Structure & Fractal Trend
+    document.getElementById("ag1Trend").textContent = struct.trend.replace(/_/g, " ");
+    document.getElementById("ag1Wyckoff").textContent = struct.wyckoff_phase;
     document.getElementById("textAgent1").textContent = struct.narrative;
     const tag1 = document.getElementById("tagAgent1");
     tag1.textContent = struct.htf_alignment;
     tag1.className = "agent-tag " + (struct.trend.includes("BULLISH") ? "bullish" : (struct.trend.includes("BEARISH") ? "bearish" : "neutral"));
 
-    // Agent 2: Price Action
+    // Agent 2: Price Action & Momentum Pro
     document.getElementById("ag2Pattern").textContent = pa.pattern;
-    document.getElementById("ag2Mom").textContent = `${pa.momentum_rating} (RSI: ${pa.rsi})`;
+    document.getElementById("ag2Div").textContent = `${pa.momentum_rating} (${pa.divergence})`;
     document.getElementById("textAgent2").textContent = pa.narrative;
     const tag2 = document.getElementById("tagAgent2");
     tag2.textContent = pa.momentum_rating;
     tag2.className = "agent-tag " + (pa.momentum_rating === "BULLISH" ? "bullish" : (pa.momentum_rating === "BEARISH" ? "bearish" : "neutral"));
 
-    // Agent 3: SMC & Liquidity
-    document.getElementById("ag3Zone").textContent = `${smc.range_percentage}% (${smc.pricing_bias})`;
+    // Agent 3: ICT / SMC & Liquidity Hunt
+    document.getElementById("ag3Zone").textContent = `${smc.range_percentage}% (${smc.pricing_bias.replace(/_/g, " ")})`;
     document.getElementById("ag3Target").textContent = `BSL: ${smc.bsl_target} | SSL: ${smc.ssl_target}`;
     document.getElementById("textAgent3").textContent = smc.narrative;
     const tag3 = document.getElementById("tagAgent3");
     tag3.textContent = smc.pricing_bias.replace(/_/g, " ");
     tag3.className = "agent-tag " + (smc.pricing_bias.includes("BULLISH") ? "bullish" : (smc.pricing_bias.includes("BEARISH") ? "bearish" : "neutral"));
+
+    // Agent 4: Macro & Session Analyst (NEW)
+    document.getElementById("ag4Session").textContent = macro.session_name;
+    document.getElementById("ag4MacroBias").textContent = macro.macro_flow;
+    document.getElementById("textAgent4").textContent = macro.narrative;
+    const tag4 = document.getElementById("tagAgent4");
+    tag4.textContent = macro.killzone_active ? "KILLZONE AKTIF" : "OFF-PEAK";
+    tag4.className = "agent-tag " + (macro.killzone_active ? "bullish" : "neutral");
 
     // Checklist update
     const checklistUl = document.getElementById("checklistItems");
