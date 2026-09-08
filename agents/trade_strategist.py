@@ -73,22 +73,28 @@ def synthesize_trade_plan(
         bias = "NEUTRAL / RANGING"
         confidence = 60
 
-    # Calculate Entry, SL, TP1, TP2, R:R
-    # Safe fallback buffer based on ATR
-    sl_buffer = max(atr * 1.2, price * 0.002)
+    # Calculate Realistic Intraday Entry, SL, TP1, TP2, and R:R based on ATR & Local Structure
+    # On 15m/1h, SL should be based on recent swing / ATR buffer (e.g. 1.2x to 1.8x ATR)
+    sl_distance = max(atr * 1.5, price * 0.002)
 
     if action == "BUY":
         entry_low = round(price - (atr * 0.2), digits)
         entry_high = round(price, digits)
         entry_mid = (entry_low + entry_high) / 2
         
-        # SL below recent demand / pivot
-        stop_loss = round(min(entry_low - sl_buffer, pivots["s1"]), digits)
+        # Stop Loss placed logically below entry based on ATR buffer
+        stop_loss = round(entry_low - sl_distance, digits)
         risk = max(entry_mid - stop_loss, 0.0001)
 
-        # TP targets
+        # TP targets based on realistic Risk-to-Reward (1:1.5 and 1:2.5)
         tp1 = round(entry_mid + (risk * 1.5), digits)
-        tp2 = round(max(entry_mid + (risk * 2.8), pivots["r1"]), digits)
+        tp2 = round(entry_mid + (risk * 2.5), digits)
+        
+        # If daily R1 is near and above TP1, it can serve as a logical TP target
+        if pivots.get("r1") and pivots["r1"] > entry_mid:
+            if entry_mid + (risk * 1.2) <= pivots["r1"] <= entry_mid + (risk * 3.0):
+                tp2 = round(pivots["r1"], digits)
+
         reward_avg = ((tp1 - entry_mid) + (tp2 - entry_mid)) / 2
         rr_ratio = round(reward_avg / risk, 2)
         
@@ -97,23 +103,29 @@ def synthesize_trade_plan(
         entry_high = round(price + (atr * 0.2), digits)
         entry_mid = (entry_low + entry_high) / 2
         
-        # SL above recent supply / pivot
-        stop_loss = round(max(entry_high + sl_buffer, pivots["r1"]), digits)
+        # Stop Loss placed logically above entry based on ATR buffer
+        stop_loss = round(entry_high + sl_distance, digits)
         risk = max(stop_loss - entry_mid, 0.0001)
 
-        # TP targets
+        # TP targets based on realistic Risk-to-Reward (1:1.5 and 1:2.5)
         tp1 = round(entry_mid - (risk * 1.5), digits)
-        tp2 = round(min(entry_mid - (risk * 2.8), pivots["s1"]), digits)
+        tp2 = round(entry_mid - (risk * 2.5), digits)
+
+        # If daily S1 is near and below TP1, it can serve as a logical TP target
+        if pivots.get("s1") and pivots["s1"] < entry_mid:
+            if entry_mid - (risk * 3.0) <= pivots["s1"] <= entry_mid - (risk * 1.2):
+                tp2 = round(pivots["s1"], digits)
+
         reward_avg = ((entry_mid - tp1) + (entry_mid - tp2)) / 2
         rr_ratio = round(reward_avg / risk, 2)
 
     else: # WAIT
-        entry_low = round(price * 0.998, digits)
-        entry_high = round(price * 1.002, digits)
-        stop_loss = round(pivots["s1"], digits)
-        tp1 = round(pivots["r1"], digits)
-        tp2 = round(pivots["r2"], digits)
-        rr_ratio = 1.5
+        entry_low = round(price - (atr * 0.2), digits)
+        entry_high = round(price + (atr * 0.2), digits)
+        stop_loss = round(price - (atr * 1.5), digits)
+        tp1 = round(price + (atr * 1.5), digits)
+        tp2 = round(price + (atr * 2.5), digits)
+        rr_ratio = 1.6
 
     # Tactical Checklist
     checklist = [

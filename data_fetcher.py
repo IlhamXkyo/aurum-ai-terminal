@@ -99,10 +99,20 @@ def fetch_market_snapshot(symbol: str = "XAUUSD", timeframe: str = "15") -> Dict
             return fallback
 
         current_price = get_val("close", 0.0)
-        open_price = get_val("open", current_price)
-        high_price = get_val("high", current_price)
-        low_price = get_val("low", current_price)
         
+        # Compute accurate Daily Pivots from Daily High, Low, Close (instead of Monthly pivots)
+        d_high = data_map.get("high", current_price * 1.005) or current_price * 1.005
+        d_low = data_map.get("low", current_price * 0.995) or current_price * 0.995
+        d_close = data_map.get("close", current_price) or current_price
+        
+        p_mid = (d_high + d_low + d_close) / 3.0
+        p_r1 = (2.0 * p_mid) - d_low
+        p_s1 = (2.0 * p_mid) - d_high
+        p_r2 = p_mid + (d_high - d_low)
+        p_s2 = p_mid - (d_high - d_low)
+        fib_r1 = p_mid + (0.382 * (d_high - d_low))
+        fib_s1 = p_mid - (0.382 * (d_high - d_low))
+
         parsed = {
             "symbol": symbol,
             "name": cfg["name"],
@@ -111,9 +121,9 @@ def fetch_market_snapshot(symbol: str = "XAUUSD", timeframe: str = "15") -> Dict
             "timeframe": timeframe,
             "timestamp": now,
             "price": current_price,
-            "open": open_price,
-            "high": high_price,
-            "low": low_price,
+            "open": get_val("open", current_price),
+            "high": get_val("high", current_price),
+            "low": get_val("low", current_price),
             "change_pct": data_map.get("change", 0.0) or 0.0,
             "indicators_current_tf": {
                 "rsi": get_val("RSI", 50.0),
@@ -129,8 +139,8 @@ def fetch_market_snapshot(symbol: str = "XAUUSD", timeframe: str = "15") -> Dict
             },
             "htf_4h": {
                 "close": data_map.get("close|240", current_price),
-                "high": data_map.get("high|240", high_price),
-                "low": data_map.get("low|240", low_price),
+                "high": data_map.get("high|240", current_price),
+                "low": data_map.get("low|240", current_price),
                 "rsi": data_map.get("RSI|240", 50.0),
                 "ema50": data_map.get("EMA50|240", current_price),
                 "ema200": data_map.get("EMA200|240", current_price),
@@ -139,22 +149,22 @@ def fetch_market_snapshot(symbol: str = "XAUUSD", timeframe: str = "15") -> Dict
                 "recommend": data_map.get("Recommend.All|240", 0.0),
             },
             "htf_daily": {
-                "close": data_map.get("close", current_price),
-                "high": data_map.get("high", high_price),
-                "low": data_map.get("low", low_price),
+                "close": d_close,
+                "high": d_high,
+                "low": d_low,
                 "rsi": data_map.get("RSI", 50.0),
                 "ema50": data_map.get("EMA50", current_price),
                 "ema200": data_map.get("EMA200", current_price),
                 "recommend": data_map.get("Recommend.All", 0.0),
             },
             "pivots": {
-                "middle": data_map.get("Pivot.M.Classic.Middle", current_price),
-                "r1": data_map.get("Pivot.M.Classic.R1", current_price * 1.01),
-                "s1": data_map.get("Pivot.M.Classic.S1", current_price * 0.99),
-                "r2": data_map.get("Pivot.M.Classic.R2", current_price * 1.02),
-                "s2": data_map.get("Pivot.M.Classic.S2", current_price * 0.98),
-                "fib_r1": data_map.get("Pivot.M.Fibonacci.R1", current_price * 1.008),
-                "fib_s1": data_map.get("Pivot.M.Fibonacci.S1", current_price * 0.992),
+                "middle": p_mid,
+                "r1": p_r1,
+                "s1": p_s1,
+                "r2": p_r2,
+                "s2": p_s2,
+                "fib_r1": fib_r1,
+                "fib_s1": fib_s1,
             },
             "tv_ratings": {
                 "all": data_map.get("Recommend.All", 0.0),
