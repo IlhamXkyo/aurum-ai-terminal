@@ -1,107 +1,59 @@
-# 🪙 Forex & Gold (XAUUSD) AI Live Trading Terminal
+# Aurum AI Trading Terminal
 
-![Python](https://img.shields.io/badge/Python-3.12%2B-blue?logo=python)
-![Flask](https://img.shields.io/badge/Framework-Flask-black?logo=flask)
-![TradingView](https://img.shields.io/badge/Chart-TradingView%20Widget-2962FF?logo=tradingview)
-![Architecture](https://img.shields.io/badge/Architecture-Multi--Agent%20Parallel-brightgreen)
-![License](https://img.shields.io/badge/License-MIT-green)
+Aplikasi terminal trading untuk analisis teknikal pasar Forex dan Emas (XAUUSD) berbasis Flask dan widget grafik TradingView.
 
-Aplikasi terminal trading modern dengan antarmuka bertema gelap (*Dark Bloomberg Style*), chart bergerak real-time resmi dari TradingView, dan mesin analisis AI **4 Agen Paralel** untuk Forex dan Emas (XAUUSD).
+Aplikasi ini menjalankan pipeline analisis teknikal terstruktur yang mengkombinasikan evaluasi tren jangka panjang, pola price action, dan pemetaan likuiditas Smart Money Concepts (SMC) untuk menghasilkan rencana trading ringkas.
 
----
+## Fitur
 
-## ✨ Fitur Utama
+- **Grafik Interaktif TradingView**: Streaming data tick real-time dengan pemilihan timeframe fleksibel (1m, 5m, 15m, 1H, 4H, 1D).
+- **Pipeline Analisis Bertingkat**:
+  - *Market Structure*: Evaluasi tren kerangka waktu tinggi (HTF), Break of Structure (BOS), dan pivot point.
+  - *Price Action & Momentum*: Pembacaan pola candlestick, level RSI (14), dan konvergensi histogram MACD.
+  - *Liquidity Mapping*: Penandaan area order block, discount vs premium zone, serta buy-side/sell-side liquidity.
+  - *Trade Synthesis*: Rangkuman sinyal entry, batas risiko stop loss, target take profit, dan rasio risk-to-reward.
+- **Pita Metrik Pasar**: Pemantauan langsung status persilangan EMA 20/50/200 dan rentang volatilitas harian.
+- **Dukungan Pasangan Mata Uang**: XAUUSD, EURUSD, GBPUSD, USDJPY, dan BTCUSD.
 
-- **📈 Real-Time Moving Chart (TradingView Advanced):**
-  - Streaming data tick-by-tick dari OANDA / FOREXCOM.
-  - Multi-Timeframe switcher instan: `1m`, `5m`, `15m`, `1H`, `4H`, `1D`.
-  - Dilengkapi drawing tools, indikator teknikal bawaan, dan volume.
-- **⚡ Analisis AI Multi-Agen Paralel:**
-  - **🏛️ Agen 1 (Market Structure & HTF Trend):** Menganalisis tren 4H & Daily, keselarasan HTF, Break of Structure (BOS), dan Pivot Point institusional.
-  - **🕯️ Agen 2 (Price Action & Momentum):** Membaca pola candlestick (Pin Bar, Engulfing, Doji), status RSI, dan akselerasi momentum MACD.
-  - **🌊 Agen 3 (SMC & Institutional Liquidity):** Evaluasi valuasi *Discount vs Premium*, pemetaan *Order Block* (OB), dan target likuiditas (BSL/SSL).
-  - **🎯 Agen 4 (Chief Trade Strategist):** Mensintesis seluruh agen menjadi rencana trading actionable: Rekomendasi (`BUY`/`SELL`/`WAIT`), *Confidence Score*, *Entry Zone*, *Stop Loss*, *Take Profit 1 & 2*, dan kalkulasi rasio *Risk:Reward (R:R)*.
-- **📊 Real-Time Metric Ribbon:**
-  - Meteran dinamis RSI (14), status persilangan MACD, pita EMA 20/50/200, dan rentang Pivot S1/R1.
-- **🌐 Dukungan Multi-Pasangan Mata Uang:**
-  - `XAUUSD` (Gold Spot)
-  - `EURUSD`
-  - `GBPUSD`
-  - `USDJPY`
-  - `BTCUSD`
+## Instalasi
 
----
+### Prasyarat
 
-## 🏛️ Arsitektur Multi-Agen Paralel
+- Python 3.10 atau lebih baru
+- pip
 
-```mermaid
-flowchart TD
-    Data[Data Pasar Real-Time TradingView Multi-Timeframe] --> A1
-    Data --> A2
-    Data --> A3
-    
-    subgraph ParallelAgents [Eksekusi Paralel Bersamaan]
-        A1[🏛️ Agen 1: Market Structure & HTF Trend<br>BOS, CHOCH, EMA 50/200 4H & Daily, Pivot Points]
-        A2[🕯️ Agen 2: Price Action & Momentum<br>Pola Candlestick, Rejection Wicks, RSI & MACD Cross]
-        A3[🌊 Agen 3: SMC & Institutional Liquidity<br>Order Blocks, Fair Value Gaps, BSL/SSL Targets]
-    end
-    
-    A1 --> A4[🎯 Agen 4: Chief Trade Strategist<br>Synthesizer & Risk/Reward Engine]
-    A2 --> A4
-    A3 --> A4
-    
-    A4 --> Output[Master Trade Plan Card:<br>Action BUY/SELL/WAIT, Entry Zone, SL, TP1, TP2, R:R]
-```
+### Langkah Menjalankan
 
----
+1. Clone repositori:
+   ```bash
+   git clone https://github.com/IlhamXkyo/aurum-ai-terminal.git
+   cd aurum-ai-terminal
+   ```
 
-## 🚀 Panduan Instalasi & Menjalankan
+2. Buat virtual environment:
+   ```bash
+   python -m venv venv
+   # Di Windows:
+   venv\Scripts\activate
+   # Di Linux/macOS:
+   source venv/bin/activate
+   ```
 
-### 1. Kloning Repository
-```bash
-git clone https://github.com/IlhamXkyo/aurum-ai-terminal.git
-cd aurum-ai-terminal
-```
+3. Pasang paket yang diperlukan:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-### 2. Pasang Dependencies
-Pastikan Python 3.10+ sudah terpasang, lalu jalankan:
-```bash
-pip install -r requirements.txt
-```
+4. Jalankan aplikasi:
+   ```bash
+   python app.py
+   ```
+   Buka `http://localhost:5000` di peramban.
 
-### 3. Jalankan Aplikasi
-* **Cara Cepat (Windows):** Cukup double-click file `run_terminal.bat`.
-* **Cara Manual:**
-```bash
-python server.py
-```
-Buka browser di: **`http://localhost:5000`**
+## Catatan dan Batasan
 
----
+Aplikasi ini ditujukan semata-mata untuk riset dan edukasi analisis teknikal mandiri, bukan rekomendasi finansial atau jaminan keuntungan. Selalu terapkan manajemen risiko disiplin pada setiap aktivitas trading.
 
-## 📁 Struktur Berkas
+## Lisensi
 
-```
-gold_ai_terminal/
-├── agents/
-│   ├── market_structure.py    # Agen 1: Struktur Tren HTF & Pivot S/R
-│   ├── price_action.py        # Agen 2: Pola Candlestick & Momentum
-│   ├── smc_liquidity.py       # Agen 3: Smart Money Concepts & Liquidity
-│   └── trade_strategist.py    # Agen 4: Chief Synthesizer & R:R Engine
-├── templates/
-│   └── index.html             # Antarmuka Terminal Trading
-├── static/
-│   ├── app.js                 # Logika Frontend & Controller Widget TV
-│   └── style.css              # Dark Bloomberg Terminal Style
-├── data_fetcher.py            # Konektor Data Multi-Timeframe TradingView
-├── server.py                  # Flask Web Server & API
-├── requirements.txt           # Daftar Pustaka Python
-├── run_terminal.bat           # Launcher Cepat Windows
-├── .gitignore
-└── README.md
-```
-
----
-
-## ⚠️ Disclaimer
-*Aplikasi ini dibuat untuk tujuan riset, edukasi, dan analisis teknikal pasar finansial. Segala keputusan trading dan pengelolaan risiko sepenuhnya merupakan tanggung jawab pengguna masing-masing.*
+MIT License.
